@@ -792,17 +792,24 @@ async function beginGather() {
 }
 
 async function nextQ(isOpen = false) {
-    const sys = `${ZK}\n\nCURRENT CONTEXT:\n- Client: ${cli.company}\n- Internal Research: ${JSON.stringify(prof)}\n${fileContent ? `- Uploaded Doc Summary: ${fileContent}\n` : ''}- Discovery Round: ${rn}/6`;
+    // 1. Static System Instruction (Identity & Rules)
+    const sys = `${ZK}\n\nRESEARCH CONTEXT for ${cli.company}:\n${JSON.stringify(prof)}\n${fileContent ? `UPLOADED FILE:\n${fileContent}\n` : ''}`;
     
-    let p = sys;
+    // 2. Current turn instruction
+    let turnPrompt = '';
     if (isOpen) {
-        p += `\n\nTASK: Warm, professional opening. Reference your research into ${cli.company}. Ask a broad opening question about their goals for today.`;
+        turnPrompt = `Initialize the session for ${cli.company}. Start with a warm, contextual greeting and ask "What type of help do you need today?"`;
     } else {
-        p += `\n\nTASK: ${rn >= 5 ? 'Summarize requirements and output REQUIREMENTS_COMPLETE + JSON.' : 'Continue discovery. Ask a probe-seeking question to uncover pain or success metrics.'}`;
+        turnPrompt = `Round: ${rn}/6. ${rn >= 5 ? 'Summarize requirements and output REQUIREMENTS_COMPLETE + JSON now.' : 'Continue discovery. Limit response to 3-4 sentences. Seek success metrics or pain points.'}`;
     }
 
     const forcePro = rn >= 5;
-    return gem(p, 1000, 0.7, forcePro, convo);
+    try {
+        return await gem(turnPrompt, 1000, 0.7, forcePro, convo, sys);
+    } catch (e) {
+        console.error('[nextQ] AI Error:', e);
+        throw e;
+    }
 }
 
 /* ═══ File upload — handles text, PDF, images ═══ */
