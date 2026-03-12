@@ -106,6 +106,13 @@ async function bootStaffLogin() {
         const csv = await r.text();
         staffClients = parseClientCSV(csv);
         setSS('ok', `Connected · ${staffClients.length} clients loaded`);
+        
+        // AUTO-LOGIN: Check for persistent session
+        const activeAgent = localStorage.getItem('f_active_agent');
+        if (activeAgent && getStoredPw(activeAgent)) {
+            console.log('[Auth] Restoring session for:', activeAgent);
+            startStaffPortal(activeAgent);
+        }
     } catch (e) {
         setSS('er', 'Could not load client sheet — using manual leads only');
     }
@@ -225,7 +232,6 @@ document.getElementById('loginBtn').addEventListener('click', () => {
     const err = document.getElementById('lerr');
     err.style.display = 'none';
 
-    // Only @fristinetech.com emails allowed
     if (!em.endsWith('@fristinetech.com')) {
         err.textContent = 'Access restricted to @fristinetech.com presales accounts only.';
         err.style.display = 'block';
@@ -240,11 +246,14 @@ document.getElementById('loginBtn').addEventListener('click', () => {
         document.getElementById('SP').classList.remove('hidden');
         document.getElementById('sp-email-show').textContent = `Setting up account for ${em}`;
         document.getElementById('SP').dataset.email = em;
+        // Pass the password forward if they already typed one
+        if (pw) document.getElementById('sp-pw1').value = pw;
         return;
     }
 
     // Returning login
     if (pw === stored) {
+        localStorage.setItem('f_active_agent', em);
         startStaffPortal(em);
         return;
     }
@@ -278,6 +287,7 @@ document.getElementById('setPwBtn').addEventListener('click', () => {
     if (pw1 !== pw2) { err.textContent = 'Passwords do not match.'; err.style.display = 'block'; return; }
 
     setStoredPw(email, pw1);
+    localStorage.setItem('f_active_agent', email);
     document.getElementById('SP').classList.add('hidden');
     startStaffPortal(email);
 });
@@ -1820,9 +1830,17 @@ function initDynamicUI() {
 }
 
 /* ══ LOGOUT / BACK ══ */
-document.getElementById('staffLogout').addEventListener('click', () => location.reload());
-document.getElementById('logoutBtn').addEventListener('click', () => { window.location.href = window.location.pathname; });
-document.getElementById('trackLogout').addEventListener('click', () => location.reload());
+document.getElementById('staffLogout').addEventListener('click', () => {
+    localStorage.removeItem('f_active_agent');
+    location.reload();
+});
+document.getElementById('logoutBtn').addEventListener('click', () => { 
+    window.location.href = window.location.pathname; 
+});
+document.getElementById('trackLogout').addEventListener('click', () => {
+    localStorage.removeItem('f_active_agent');
+    location.reload();
+});
 document.getElementById('backToDashBtn').addEventListener('click', () => {
     document.getElementById('T').classList.add('hidden');
     document.getElementById('H').classList.remove('hidden');
