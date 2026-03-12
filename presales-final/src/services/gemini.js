@@ -1,4 +1,4 @@
-const GKEY = "AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM".trim();
+const GKEY = "REPLACE_WITH_YOUR_KEY";
 const GMODEL = "gemini-2.5-flash"; // Confirmed available model
 
 export async function gem(prompt, maxTokens = 1000, temp = 0.7) {

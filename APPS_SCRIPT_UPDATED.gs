@@ -47,10 +47,56 @@ function doPost(e) {
     if (action === "add_client") {
       return addClient(body.client_id, body.company, body.industry, body.email, body.size, body.notes);
     }
+    if (action === "proxy_gemini") {
+      return proxyGemini(body);
+    }
 
     return jsonResponse({ error: "Unknown action: " + action });
   } catch(err) {
     return jsonResponse({ error: err.toString() });
+  }
+}
+
+/**
+ * Proxies Gemini API requests to keep the API key on the server.
+ * Requires "GEMINI_API_KEY" to be set in Script Properties.
+ */
+function proxyGemini(body) {
+  const key = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
+  if (!key) {
+    return jsonResponse({ error: "GEMINI_API_KEY not configured in Apps Script Properties." });
+  }
+
+  const model = body.model || "gemini-1.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  
+  const payload = {
+    contents: body.contents,
+    generationConfig: body.generationConfig || {}
+  };
+  if (body.system_instruction) {
+    payload.system_instruction = body.system_instruction;
+  }
+
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const result = JSON.parse(response.getContentText());
+    
+    if (response.getResponseCode() !== 200) {
+      return jsonResponse({ error: result.error?.message || "Gemini API Error" });
+    }
+
+    const text = result.candidates[0].content.parts[0].text;
+    return jsonResponse({ success: true, text: text });
+  } catch (e) {
+    return jsonResponse({ error: "Proxy Exception: " + e.toString() });
   }
 }
 

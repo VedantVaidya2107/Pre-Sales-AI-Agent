@@ -1,4 +1,5 @@
-const GKEY = "AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM".trim();
+const GKEY = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeQkhQclsvGDQfMVcKxRx3ngabIr7igGKZhkTG9oW20pm4D7wosLx1mQvZvNdOX1xyNA/exec";
 
 // Model routing: flash for quick conversational turns, pro for deep analysis & proposal gen
 const MODELS = {
@@ -46,6 +47,12 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
     // 2. The prompt itself is the final 'user' part
     contents.push({ role: 'user', parts: [{ text: prompt }] });
 
+    // 3. Handle Proxy Mode (No GKEY)
+    if (!GKEY) {
+        console.log(`[Gemini Router] No key found. Routing via Proxy...`);
+        return gemProxy(model, contents, maxTokens, temp, systemInstruction);
+    }
+
     try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GKEY}`;
         const body = {
@@ -80,6 +87,44 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
             return gemFlashFallback(contents, maxTokens, temp, systemInstruction);
         }
         throw e;
+    }
+}
+
+async function gemProxy(model, contents, maxTokens, temp, systemInstruction) {
+    try {
+        const r = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Apps Script requires no-cors for simple redirects, or handle redirects carefully
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'proxy_gemini',
+                model,
+                contents,
+                generationConfig: { maxOutputTokens: maxTokens, temperature: temp },
+                system_instruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : null
+            })
+        });
+        
+        // Note: with 'no-cors', we can't read the response. 
+        // We'll likely need a different approach for read-write cycles in Apps Script (e.g. JSONP or simpler CORS)
+        // For now, I'll assume standard fetch with CORS handling on the Apps Script side.
+        
+        // Re-attempting standard CORS fetch
+        const r2 = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'proxy_gemini',
+                model,
+                contents,
+                generationConfig: { maxOutputTokens: maxTokens, temperature: temp },
+                system_instruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : null
+            })
+        });
+        const d = await r2.json();
+        if (!r2.ok || d.error) throw new Error(d.error || 'Proxy Error');
+        return d.text;
+    } catch (e) {
+        throw new Error("Gemini Proxy Failed: " + e.message);
     }
 }
 

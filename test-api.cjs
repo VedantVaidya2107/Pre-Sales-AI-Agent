@@ -1,6 +1,6 @@
 
 const https = require('https');
-const GKEY = "AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM";
+const GKEY = "REPLACE_WITH_YOUR_KEY";
 https.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${GKEY}`, (r) => {
     let d = ''; r.on('data', (c) => d += c);
     r.on('end', () => {
