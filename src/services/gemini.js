@@ -2,8 +2,8 @@ const GKEY = "AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM".trim();
 
 // Model routing: flash for quick conversational turns, pro for deep analysis & proposal gen
 const MODELS = {
-    flash: "gemini-2.5-flash",   // fast, cheap — greetings, short Q&A, simple follow-ups
-    pro:   "gemini-2.5-pro"      // powerful — complex analysis, proposal generation, solution design
+    flash: "gemini-1.5-flash",   // fast, cheap — greetings, short Q&A, simple follow-ups
+    pro:   "gemini-1.5-pro"      // powerful — complex analysis, proposal generation, solution design
 };
 
 /**

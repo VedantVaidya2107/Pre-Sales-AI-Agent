@@ -2,6 +2,7 @@ import './style.css';
 import { parseCSV, parseClientCSV } from './src/services/csv-service.js';
 import { gem, safeJ } from './src/services/gemini.js';
 import { uploadFileToDrive } from './src/services/google-drive.js';
+import mammoth from 'mammoth';
 
 /* ══════════════════════════════════════════════
    CONFIG — Update APPS_SCRIPT_URL after deploying
@@ -829,7 +830,7 @@ File: ${f.name}
 Task: Extract ALL business requirements, pain points, current tools, departments, process flows, and any other information relevant to understanding what Zoho solutions they need.
 Return a structured text summary of everything you find. Be comprehensive — include every detail.`;
 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM`;
                 const body = {
                     contents: [{
                         parts: [
@@ -842,6 +843,17 @@ Return a structured text summary of everything you find. Be comprehensive — in
                 const r = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
                 const d = await r.json();
                 fileContent = d.candidates?.[0]?.content?.parts?.[0]?.text || `[File: ${f.name} - could not extract text]`;
+            } else if (f.name.endsWith('.docx')) {
+                // Parse DOCX via mammoth
+                const arrayBuffer = await new Promise((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = ev => res(ev.target.result);
+                    reader.onerror = rej;
+                    reader.readAsArrayBuffer(f);
+                });
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                fileContent = result.value;
+                if (fileContent.length > 8000) fileContent = fileContent.slice(0, 8000) + '\n...[truncated]';
             } else {
                 // Text-based file — read directly
                 fileContent = await new Promise((res, rej) => {
@@ -895,7 +907,7 @@ Do NOT give a generic reply. Reference specific details from the file.`;
 
         } catch (err) {
             hideLdr();
-            console.error('[File] Processing error:', err);
+            console.error('[File] Processing error details:', err.message, err.stack, err);
             addAg(`I've received your file <strong>${f.name}</strong>. Could you briefly summarize the key requirements or challenges it covers? I'll incorporate everything into our solution.`);
         }
 
@@ -994,7 +1006,7 @@ document.getElementById('msgIn').addEventListener('keydown', e => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-IN'; // Indian English as primary
     let isListening = false;
