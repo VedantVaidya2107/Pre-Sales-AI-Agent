@@ -2,8 +2,8 @@ const GKEY = "AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM".trim();
 
 // Model routing: flash for quick conversational turns, pro for deep analysis & proposal gen
 const MODELS = {
-    flash: "gemini-1.5-flash",   // fast, cheap — greetings, short Q&A, simple follow-ups
-    pro:   "gemini-1.5-pro"      // powerful — complex analysis, proposal generation, solution design
+    flash: "gemini-2.5-flash",   // fast, cheap — updated for 2026 stability
+    pro:   "gemini-2.5-pro"      // powerful — updated for 2026 stability
 };
 
 /**
@@ -47,7 +47,7 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
     contents.push({ role: 'user', parts: [{ text: prompt }] });
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GKEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GKEY}`;
         const body = {
             contents,
             generationConfig: { maxOutputTokens: maxTokens, temperature: temp }
@@ -84,7 +84,7 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
 }
 
 async function gemFlashFallback(contents, maxTokens, temp, systemInstruction = "") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.flash}:generateContent?key=${GKEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/${MODELS.flash}:generateContent?key=${GKEY}`;
     const body = {
         contents,
         generationConfig: { maxOutputTokens: maxTokens, temperature: temp }
