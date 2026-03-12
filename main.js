@@ -1022,7 +1022,12 @@ document.getElementById('msgIn').addEventListener('keydown', e => {
     micBtn.addEventListener('click', () => {
         if (discoveryComplete) return;
         if (isListening) {
+            // Manual stop should send IMMEDIATELY
             recognition.stop();
+            const inp = document.getElementById('msgIn');
+            setTimeout(() => {
+                if (inp.value.trim()) document.getElementById('sendBtn').click();
+            }, 100); 
             return;
         }
         finalTranscript = '';
@@ -1063,10 +1068,13 @@ document.getElementById('msgIn').addEventListener('keydown', e => {
 
         if (finalTranscript.trim()) {
             inp.value = finalTranscript.trim();
-            // Auto-send after a short pause so user can see what was transcribed
+            // Auto-send after a longer pause (2s) so user has time to review/breathe
             setTimeout(() => {
-                if (inp.value.trim()) document.getElementById('sendBtn').click();
-            }, 800);
+                // Only auto-send if we are NOT listening anymore (prevents double sends)
+                if (!isListening && inp.value.trim()) {
+                     document.getElementById('sendBtn').click();
+                }
+            }, 2000);
         } else {
             inp.value = '';
         }
