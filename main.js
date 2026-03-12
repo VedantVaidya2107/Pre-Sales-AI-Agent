@@ -1257,13 +1257,24 @@ function showReqSummary() {
 async function buildSolution() {
     setStg(3, 'done'); setStg(4, 'act'); setPhase('Architecting Proposal…');
     showLdr('Designing Solution…');
-    const p = `${ZK}\nDesign Zoho solution for ${cli.company} based on: ${JSON.stringify(reqs)}\nReturn JSON with primary_products, implementation_phases, team_structure, and monthly_cost.`;
-    const res = await gem(p, 2000, 0.4, true); // forcePro: solution design needs deep reasoning
-    sol = safeJ(res);
-    hideLdr();
-    setStg(4, 'done');
-    addAg("Your Zoho Transformation Roadmap is ready! Let's take a look.", { video: true });
-    openModal('videoModal');
+    try {
+        const p = `${ZK}\nDesign Zoho solution for ${cli.company} based on: ${JSON.stringify(reqs)}\nReturn JSON with primary_products, implementation_phases, team_structure, and monthly_cost.`;
+        const res = await gem(p, 2000, 0.4, true); // forcePro: solution design needs deep reasoning
+        sol = safeJ(res);
+        if (!sol) throw new Error("Could not parse solution JSON");
+        hideLdr();
+        setStg(4, 'done');
+        addAg("Your Zoho Transformation Roadmap is ready! Let's take a look.", { video: true });
+        openModal('videoModal');
+    } catch (e) {
+        console.error('Build Solution Error:', e);
+        hideLdr();
+        addAg("I encountered an issue while architecting your proposal. This is often due to an API limit or configuration issue. Please ensure your API key is active and try again later.");
+        // Re-enable confirm button for retry
+        setTimeout(() => {
+            document.getElementById('confirmProposal')?.addEventListener('click', buildSolution);
+        }, 500);
+    }
 }
 
 async function generateProposal() {
