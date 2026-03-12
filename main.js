@@ -10,7 +10,7 @@ import mammoth from 'mammoth';
 ══════════════════════════════════════════════ */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeQkhQclsvGDQfMVcKxRx3ngabIr7igGKZhkTG9oW20pm4D7wosLx1mQvZvNdOX1xyNA/exec";
 const CLIENT_SHEET_ID = "1U-kaTF-TEAd835RQVnZd4aCH5c9Wx9PVrzsENaJRtog";
-const DEPLOY_URL = "https://presales-sample.netlify.app";
+const DEPLOY_URL = "https://vedantvaidya2107.github.io/Pre-Sales-AI-Agent/";
 
 /* ══ STATE ══ */
 let staffClients = [];
@@ -59,16 +59,12 @@ Every proposal must follow this structure:
 6. ESCALATION PROCESS: 3-level table (Sr BA → CTO → CEO with response times)
 7. PROJECT GOVERNANCE & CHECKPOINTS: 9-step list
 8. CONSTRAINTS & ASSUMPTIONS: Bullet points
-9. COMMERCIALS: Software License table + Implementation Commercials table
-10. PAYMENT TERMS: Standard 60/40 split
-11. NEXT STEPS: Table with Steps | Agenda | Fristine Team | Client Team
-12. ACCEPTANCE: Signature block
 
 CONSULTATION RULES:
-1. BE WARM & HELPFUL: Start with a friendly greeting. Ask "What type of help do you need today?"
+1. BE WARM & HELPFUL: Start with a friendly, contextual greeting based on research. Then ask how you can help.
 2. DYNAMIC KNOWLEDGE: Use research context when asked about the company or industry.
 3. CONCISE & BULLETED: Limit responses to 3-4 sentences maximum.
-4. CHALLENGE & PROBE: If answers are shallow, ask a sharp, industry-specific follow-up.
+4. CHALLENGE & PROBE: If answers are shallow or repetitive, ask a sharp, industry-specific follow-up.
 5. MEDDPICC FOCUS: Uncover Pain and Metrics (success measurement).
 6. PROFESSIONAL TONE: Authoritative yet helpful. No pricing talk.
 7. JSON TRIGGER: After 4-6 meaningful exchanges, output REQUIREMENTS_COMPLETE followed by this EXACT JSON structure — fill every field as completely as possible:
@@ -786,13 +782,17 @@ async function beginGather() {
 }
 
 async function nextQ(isOpen = false) {
-    const sys = `${ZK}\nRESEARCH CONTEXT for ${cli.company}:\n${JSON.stringify(prof)}\n${fileContent ? `UPLOADED FILE:\n${fileContent}\n` : ''}Round: ${rn}/6\nHistory: ${JSON.stringify(convo.slice(-10))}`;
-    const p = isOpen
-        ? `${sys}\nOpen with a warm, personal greeting. Then: "I've completed my research into your operations in the ${prof.confirmed || cli.industry} sector. To start, what type of help do you need today?"`
-        : `${sys}\nKeep under 4 sentences. ${rn >= 5 ? 'CRITICAL: Output REQUIREMENTS_COMPLETE + JSON summary now.' : 'Output REQUIREMENTS_COMPLETE + JSON after 4-5 meaningful exchanges.'}`;
-    // Route to Pro only at round 5+ when we're summarising requirements (complex reasoning needed)
+    const sys = `${ZK}\n\nCURRENT CONTEXT:\n- Client: ${cli.company}\n- Internal Research: ${JSON.stringify(prof)}\n${fileContent ? `- Uploaded Doc Summary: ${fileContent}\n` : ''}- Discovery Round: ${rn}/6`;
+    
+    let p = sys;
+    if (isOpen) {
+        p += `\n\nTASK: Warm, professional opening. Reference your research into ${cli.company}. Ask a broad opening question about their goals for today.`;
+    } else {
+        p += `\n\nTASK: ${rn >= 5 ? 'Summarize requirements and output REQUIREMENTS_COMPLETE + JSON.' : 'Continue discovery. Ask a probe-seeking question to uncover pain or success metrics.'}`;
+    }
+
     const forcePro = rn >= 5;
-    return gem(p, 1000, 0.7, forcePro);
+    return gem(p, 1000, 0.7, forcePro, convo);
 }
 
 /* ═══ File upload — handles text, PDF, images ═══ */

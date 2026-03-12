@@ -25,24 +25,38 @@ function routeModel(prompt, forcePro = false) {
     return MODELS.flash;
 }
 
-export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false) {
+/**
+ * Formats conversation history for the Gemini API.
+ * Maps 'user' to 'user' and 'assistant' to 'model'.
+ */
+function formatHistory(history = []) {
+    return history.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+    }));
+}
+
+export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false, history = []) {
     const model = routeModel(prompt, forcePro);
-    console.log(`[Gemini Router] → ${model} (maxTokens:${maxTokens})`);
+    console.log(`[Gemini Router] → ${model} (maxTokens:${maxTokens}, history:${history.length})`);
+    
+    // Construct multi-turn message sequence
+    const contents = [...formatHistory(history), { role: 'user', parts: [{ text: prompt }] }];
+
     try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GKEY}`;
         const r = await fetch(url, {
             method: 'POST',
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
+                contents,
                 generationConfig: { maxOutputTokens: maxTokens, temperature: temp }
             })
         });
         const d = await r.json();
         if (!r.ok) {
-            // Fallback: if Pro fails (quota/model unavailable), retry with Flash
             if (model === MODELS.pro) {
                 console.warn('[Gemini Router] Pro failed, falling back to Flash:', d.error?.message);
-                return gemFlashFallback(prompt, maxTokens, temp);
+                return gemFlashFallback(contents, maxTokens, temp);
             }
             throw new Error(d.error?.message || 'Gemini API Error');
         }
@@ -52,18 +66,18 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
     } catch (e) {
         if (model === MODELS.pro) {
             console.warn('[Gemini Router] Pro exception, falling back to Flash');
-            return gemFlashFallback(prompt, maxTokens, temp);
+            return gemFlashFallback(contents, maxTokens, temp);
         }
         throw e;
     }
 }
 
-async function gemFlashFallback(prompt, maxTokens, temp) {
+async function gemFlashFallback(contents, maxTokens, temp) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.flash}:generateContent?key=${GKEY}`;
     const r = await fetch(url, {
         method: 'POST',
         body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents,
             generationConfig: { maxOutputTokens: maxTokens, temperature: temp }
         })
     });
