@@ -1,6 +1,6 @@
 // Using native fetch available in Node.js 18+
 
-const GKEY = "AIzaSyC1W0Qni6n9qTZMCFlKd7cTP9d6k91TbDY";
+const GKEY = "REPLACE_WITH_YOUR_KEY";
 
 async function verify() {
     const models = ["gemini-2.5-flash", "gemini-2.5-pro"];

@@ -88,6 +88,7 @@ CONSULTATION RULES:
    BOOT — Check URL for ?client= param
 ══════════════════════════════════════════════ */
 async function init() {
+    initTheme();
     const params = new URLSearchParams(window.location.search);
     const clientId = params.get('client');
 
@@ -1942,11 +1943,29 @@ document.getElementById('trackLogout').addEventListener('click', () => {
     localStorage.removeItem('f_active_agent');
     location.reload();
 });
-document.getElementById('backToDashBtn').addEventListener('click', () => {
     document.getElementById('T').classList.add('hidden');
     document.getElementById('H').classList.remove('hidden');
     renderClientTable();
 });
+
+/* ══ THEME ENGINE ══ */
+function initTheme() {
+    const saved = localStorage.getItem('f_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    
+    // Wire up all toggle buttons
+    ['themeToggleH', 'themeToggleT', 'themeToggleA'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.onclick = toggleTheme;
+    });
+}
+
+function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('f_theme', next);
+}
 
 /* ══ BOOT ══ */
 init().then(() => {

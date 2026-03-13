@@ -38,6 +38,22 @@
   --shd2: 0 8px 40px rgba(10, 31, 68, 0.14);
 }
 
+[data-theme="dark"] {
+  --bg:         #060C1A;
+  --surf:       #0A1224;
+  --card:       #0E1A33;
+  --card2:      #12203D;
+  --brd:        #1E2D4D;
+  --brd2:       #2D3F66;
+  --text:       #E2E8F4;
+  --sub:        #95A3BC;
+  --dim:        #5A6A85;
+  --agent-bg:   #0E1A33;
+  --user-bg:    #162645;
+  --shd:        0 4px 24px rgba(0, 0, 0, 0.4);
+  --shd2:       0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
 html, body { height: 100%; overflow: hidden; background: var(--bg); scroll-behavior: smooth; }
 body { 
@@ -256,6 +272,13 @@ body {
   border-radius: 8px; padding: 6px 13px; font-size: 12px; font-family: var(--fn); cursor: pointer; transition: all 0.2s;
 }
 .btn-out:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg) }
+
+.btn-theme {
+  background: transparent; border: 1.5px solid var(--brd2); color: var(--sub);
+  width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.btn-theme:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-dim); }
 
 /* ═══ AGENT CHAT (#A) ═══ */
 #A { display: flex; flex-direction: column; background: var(--bg) }
