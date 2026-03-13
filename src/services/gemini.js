@@ -1,10 +1,10 @@
-const GKEY = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+export const GKEY = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeQkhQclsvGDQfMVcKxRx3ngabIr7igGKZhkTG9oW20pm4D7wosLx1mQvZvNdOX1xyNA/exec";
 
 // Model routing: flash for quick conversational turns, pro for deep analysis & proposal gen
 const MODELS = {
-    flash: "gemini-1.5-flash",   // stable, reliable
-    pro:   "gemini-1.5-pro"     // stable, reliable
+    flash: "gemini-2.0-flash",   // Faster, higher limits
+    pro:   "gemini-pro-latest"   // More robust for pro tasks
 };
 
 /**
@@ -45,7 +45,11 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
     const contents = formatHistory(history);
     
     // 2. The prompt itself is the final 'user' part
-    contents.push({ role: 'user', parts: [{ text: prompt }] });
+    let finalPrompt = prompt;
+    if (forcePro || prompt.toLowerCase().includes('json')) {
+        finalPrompt = "CRITICAL: YOU MUST RETURN ONLY VALID JSON. NO MARKDOWN. NO PREAMBLE.\n\n" + prompt;
+    }
+    contents.push({ role: 'user', parts: [{ text: finalPrompt }] });
 
     // 3. Handle Proxy Mode (No GKEY)
     if (!GKEY) {
@@ -65,15 +69,32 @@ export async function gem(prompt, maxTokens = 1000, temp = 0.7, forcePro = false
             body.system_instruction = { parts: [{ text: systemInstruction }] };
         }
 
-        const r = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(body)
-        });
-        const d = await r.json();
+        let r, d;
+        let retries = 0;
+        while (retries < 2) {
+            r = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            d = await r.json();
+            
+            if (r.status === 429 && retries < 1) {
+                console.warn(`[Gemini Router] 429 Quota Exceeded. Retrying in 2s...`);
+                await new Promise(res => setTimeout(res, 2000));
+                retries++;
+                continue;
+            }
+            
+            if (r.status === 429 && retries >= 1) {
+                console.warn('[Gemini Router] Quota still exceeded after retry, falling back to Flash');
+                return gemFlashFallback(contents, maxTokens, temp, systemInstruction);
+            }
+            break;
+        }
         
         if (!r.ok) {
-            if (model === MODELS.pro) {
-                console.warn('[Gemini Router] Pro failed, falling back to Flash:', d.error?.message);
+            if (model === MODELS.pro || r.status === 429) {
+                console.warn('[Gemini Router] Error or Quota hit, falling back to Flash:', d.error?.message);
                 return gemFlashFallback(contents, maxTokens, temp, systemInstruction);
             }
             throw new Error(d.error?.message || 'Gemini API Error');
@@ -138,21 +159,76 @@ async function gemFlashFallback(contents, maxTokens, temp, systemInstruction = "
         body.system_instruction = { parts: [{ text: systemInstruction }] };
     }
     
-    const r = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(body)
-    });
-    const d = await r.json();
+    let r, d;
+    let retries = 0;
+    while (retries < 2) {
+        r = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+        d = await r.json();
+        if (r.status === 429 && retries < 1) {
+            console.warn(`[Gemini Flash Fallback] 429 Quota Exceeded. Retrying in 2s...`);
+            await new Promise(res => setTimeout(res, 2000));
+            retries++;
+            continue;
+        }
+        break;
+    }
+    
     if (!r.ok) throw new Error(d.error?.message || 'Gemini Flash Fallback Error');
     return d.candidates[0].content.parts[0].text;
 }
 
 export function safeJ(txt) {
+    if (!txt) return null;
     try {
-        const clean = txt.replace(/```json|```/g, '').trim();
+        // 1. Try direct parse after cleaning markdown
+        let clean = txt.replace(/```json|```/g, '').trim();
         return JSON.parse(clean);
     } catch (e) {
-        console.error('JSON Parse Error:', e, txt);
+        try {
+            // 2. Try extracting first { } block
+            const jsonMatch = txt.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+        } catch (e2) {
+            console.error('JSON Extraction Error:', e2, txt);
+        }
+        return null;
+    }
+}
+
+/**
+ * Attempts to close unclosed brackets/braces in a truncated JSON string.
+ */
+function repairTruncatedJSON(txt) {
+    const jsonStart = txt.indexOf('{');
+    if (jsonStart === -1) return null;
+    let json = txt.slice(jsonStart);
+    
+    // Remove trailing commas if any before repairing
+    json = json.trim().replace(/,$/, "");
+
+    let stack = [];
+    for (let i = 0; i < json.length; i++) {
+        const char = json[i];
+        if (char === '{' || char === '[') stack.push(char);
+        else if (char === '}') { if (stack.length && stack[stack.length-1] === '{') stack.pop(); }
+        else if (char === ']') { if (stack.length && stack[stack.length-1] === '[') stack.pop(); }
+    }
+
+    // Close in reverse order
+    while (stack.length) {
+        const last = stack.pop();
+        json += (last === '{' ? '}' : ']');
+    }
+
+    try {
+        JSON.parse(json);
+        return json;
+    } catch (e) {
         return null;
     }
 }

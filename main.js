@@ -1,6 +1,6 @@
 import './style.css';
 import { parseCSV, parseClientCSV } from './src/services/csv-service.js';
-import { gem, safeJ } from './src/services/gemini.js';
+import { gem, safeJ, GKEY } from './src/services/gemini.js';
 import { uploadFileToDrive } from './src/services/google-drive.js';
 import mammoth from 'mammoth';
 
@@ -847,7 +847,7 @@ File: ${f.name}
 Task: Extract ALL business requirements, pain points, current tools, departments, process flows, and any other information relevant to understanding what Zoho solutions they need.
 Return a structured text summary of everything you find. Be comprehensive — include every detail.`;
 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDnOmsfj0_uhXkjjFON0Ji3roF5VIZg-VM`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GKEY}`;
                 const body = {
                     contents: [{
                         parts: [
@@ -868,8 +868,31 @@ Return a structured text summary of everything you find. Be comprehensive — in
                     reader.onerror = rej;
                     reader.readAsArrayBuffer(f);
                 });
-                const result = await mammoth.extractRawText({ arrayBuffer });
-                fileContent = result.value;
+                
+                // Enhanced mammoth extraction with detailed logging
+                try {
+                    console.log('[File] Extracting text from DOCX using mammoth...');
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    fileContent = result.value;
+                    if (!fileContent || fileContent.trim() === '') {
+                        throw new Error("Mammoth extracted empty text from the document.");
+                    }
+                    console.log(`[File] Extracted ${fileContent.length} chars from DOCX`);
+                } catch (mErr) {
+                    console.error('[File] Mammoth Error:', mErr);
+                    // Fallback: try reading as plain text just in case it's a misnamed file
+                    const textFallback = await new Promise((res) => {
+                        const reader = new FileReader();
+                        reader.onload = ev => res(ev.target.result);
+                        reader.readAsText(f);
+                    });
+                    if (textFallback && textFallback.length > 10) {
+                        fileContent = textFallback;
+                    } else {
+                        throw mErr;
+                    }
+                }
+                
                 if (fileContent.length > 8000) fileContent = fileContent.slice(0, 8000) + '\n...[truncated]';
             } else {
                 // Text-based file — read directly
@@ -967,7 +990,13 @@ function renderClientFiles(clientId) {
 document.getElementById('sendBtn').addEventListener('click', async () => {
     const inp = document.getElementById('msgIn');
     const msg = inp.value.trim();
-    if (!msg || discoveryComplete) return;
+    if (!msg) return;
+    if (discoveryComplete) {
+        discoveryComplete = false; 
+        // If we were in summary mode, hide the summary and resume
+        const sc = document.querySelector('.reqcard-full');
+        if (sc) sc.style.opacity = '0.5';
+    }
     addUs(msg);
     convo.push({ role: 'user', content: msg });
     inp.value = '';
@@ -1258,22 +1287,50 @@ async function buildSolution() {
     setStg(3, 'done'); setStg(4, 'act'); setPhase('Architecting Proposal…');
     showLdr('Designing Solution…');
     try {
-        const p = `${ZK}\nDesign Zoho solution for ${cli.company} based on: ${JSON.stringify(reqs)}\nReturn JSON with primary_products, implementation_phases, team_structure, and monthly_cost.`;
-        const res = await gem(p, 2000, 0.4, true); // forcePro: solution design needs deep reasoning
+        const p = `${ZK}\nDESIGN ZOHO SOLUTION FOR ${cli.company} BASED ON REQUIREMENTS: ${JSON.stringify(reqs)}\n\nCRITICAL: RETURN ONLY A RAW JSON OBJECT. NO MARKDOWN. NO BACKTICKS. NO PREAMBLE. NO EXPLANATIONS.\nSCHEMA:\n{\n  "primary_products": ["Product A", "Product B"],\n  "implementation_phases": [{"name": "Phase 1", "duration": "2 weeks"}],\n  "team_structure": "3 Consultants",\n  "monthly_cost": "$2000"\n}`;
+        const res = await gem(p, 2000, 0.4, true); 
         sol = safeJ(res);
-        if (!sol) throw new Error("Could not parse solution JSON");
+        if (!sol) throw new Error("Could not extract valid JSON from AI response.");
         hideLdr();
         setStg(4, 'done');
         addAg("Your Zoho Transformation Roadmap is ready! Let's take a look.", { video: true });
         openModal('videoModal');
     } catch (e) {
         console.error('Build Solution Error:', e);
+        
+        // Match user screenshot error message
+        addAg(`
+            <div class="reqcard" style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2);">
+                <div style="color:#ef4444; font-size:14px; line-height:1.6;">
+                    I encountered an issue while architecturing your proposal. This is often due to an API limit or configuration issue. Please ensure your API key is active and try again later.
+                </div>
+            </div>
+        `);
+
+        // STATIC FALLBACK: If AI fails, use heuristics based on requirements to keep the flow alive
+        console.warn('[Build Solution] AI failed. Attempting heuristic fallback...');
+        const products = [];
+        if (reqs.must_have?.some(m => /crm|sales|lead/i.test(m))) products.push('Zoho CRM');
+        if (reqs.must_have?.some(m => /account|book|invoice|tax/i.test(m))) products.push('Zoho Books');
+        if (reqs.must_have?.some(m => /support|desk|ticket/i.test(m))) products.push('Zoho Desk');
+        if (reqs.must_have?.some(m => /project|task|plan/i.test(m))) products.push('Zoho Projects');
+        if (products.length === 0) products.push('Zoho One'); // Default to One if nothing else fits
+
+        sol = {
+            primary_products: products,
+            implementation_phases: [
+                { name: "Requirement Gathering & FSD", duration: "2 Weeks" },
+                { name: "Core Configuration & Customization", duration: "4 Weeks" },
+                { name: "UAT & Training", duration: "2 Weeks" }
+            ],
+            team_structure: "1 Sr. BA, 1 Developer, 1 QA",
+            monthly_cost: "Based on User Count"
+        };
+        
         hideLdr();
-        addAg("I encountered an issue while architecting your proposal. This is often due to an API limit or configuration issue. Please ensure your API key is active and try again later.");
-        // Re-enable confirm button for retry
-        setTimeout(() => {
-            document.getElementById('confirmProposal')?.addEventListener('click', buildSolution);
-        }, 500);
+        setStg(4, 'done');
+        addAg("I've architected a preliminary Zoho Roadmap based on your requirements. Let's take a look.", { video: true });
+        openModal('videoModal');
     }
 }
 
