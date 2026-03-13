@@ -1,7 +1,7 @@
 
 const https = require('https');
 const fs = require('fs');
-const GKEY = "REPLACE_WITH_YOUR_KEY";
+const GKEY = "AIzaSyC1W0Qni6n9qTZMCFlKd7cTP9d6k91TbDY";
 
 function getModels(version) {
     return new Promise((resolve) => {

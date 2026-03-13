@@ -1,7 +1,7 @@
 
 import fetch from 'node-fetch';
 
-const GKEY = "REPLACE_WITH_YOUR_KEY";
+const GKEY = "AIzaSyC1W0Qni6n9qTZMCFlKd7cTP9d6k91TbDY";
 
 async function check() {
     try {

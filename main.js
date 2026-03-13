@@ -1285,8 +1285,21 @@ function showReqSummary() {
 
 async function buildSolution() {
     setStg(3, 'done'); setStg(4, 'act'); setPhase('Architecting Proposal…');
-    showLdr('Designing Solution…');
+    
+    const steps = [
+        { pct: 10, txt: "Analyzing client discovery profile..." },
+        { pct: 30, txt: "Mapping requirements to Zoho modules..." },
+        { pct: 55, txt: "Architecturing optimized process flow..." },
+        { pct: 75, txt: "Structuring implementation timeline..." },
+        { pct: 90, txt: "Finalizing formal Zoho proposal..." }
+    ];
+
     try {
+        for (const step of steps) {
+            showLdr(step.txt, step.pct);
+            await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+        }
+
         const p = `${ZK}\nDESIGN ZOHO SOLUTION FOR ${cli.company} BASED ON REQUIREMENTS: ${JSON.stringify(reqs)}\n\nCRITICAL: RETURN ONLY A RAW JSON OBJECT. NO MARKDOWN. NO BACKTICKS. NO PREAMBLE. NO EXPLANATIONS.\nSCHEMA:\n{\n  "primary_products": ["Product A", "Product B"],\n  "implementation_phases": [{"name": "Phase 1", "duration": "2 weeks"}],\n  "team_structure": "3 Consultants",\n  "monthly_cost": "$2000"\n}`;
         const res = await gem(p, 2000, 0.4, true); 
         sol = safeJ(res);
@@ -1754,9 +1767,22 @@ document.getElementById('downloadProposalBtn').addEventListener('click', () => {
 });
 
 /* ══ UI HELPERS ══ */
-function showLdr(txt) {
+function showLdr(txt, pct = null) {
     const l = document.getElementById('ldr');
-    if (l) { l.classList.remove('hidden'); document.getElementById('ltxt').textContent = txt; }
+    if (!l) return;
+    l.classList.remove('hidden'); 
+    document.getElementById('ltxt').textContent = txt;
+    
+    // Smooth progress bar update
+    const pb = document.getElementById('ldrPb');
+    if (pb) {
+        if (pct !== null) {
+            pb.style.display = 'block';
+            pb.style.width = pct + '%';
+        } else {
+            pb.style.display = 'none';
+        }
+    }
 }
 function hideLdr() { document.getElementById('ldr').classList.add('hidden'); }
 

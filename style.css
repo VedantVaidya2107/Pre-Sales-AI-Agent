@@ -39,8 +39,15 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
-html, body { height: 100%; overflow: hidden; background: var(--bg) }
-body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height: 1.6 }
+html, body { height: 100%; overflow: hidden; background: var(--bg); scroll-behavior: smooth; }
+body { 
+  color: var(--text); 
+  font-family: var(--fn); 
+  font-size: 15px; 
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 ::-webkit-scrollbar { width: 5px }
 ::-webkit-scrollbar-track { background: transparent }
@@ -49,9 +56,9 @@ body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height:
 
 .screen {
   position: fixed; inset: 0; z-index: 1;
-  transition: opacity .4s ease, transform .4s ease;
+  transition: opacity .5s cubic-bezier(0.4, 0, 0.2, 1), transform .5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.98) }
+.screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.985) translateY(10px); }
 
 /* ═══ LOGIN SCREEN ═══ */
 #L { display: flex; overflow: hidden; background: var(--navy) }
@@ -181,10 +188,16 @@ body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height:
 
 .btn-login {
   width: 100%; background: var(--navy); color: #fff; border: none;
-  border-radius: 10px; padding: 14px; font-family: var(--fn);
-  font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: all 0.25s;
+  border-radius: 12px; padding: 14px; font-family: var(--fn);
+  font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; 
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-login:hover { background: var(--orange); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(224,90,43,0.3) }
+.btn-login:hover { 
+  background: var(--orange); 
+  transform: translateY(-2px); 
+  box-shadow: 0 10px 25px rgba(224,90,43,0.25); 
+}
+.btn-login:active { transform: translateY(0); }
 
 .forgot-link { text-align: center; margin-top: 14px; font-size: 13px; color: var(--sub) }
 .forgot-link a, #forgotLink {
@@ -218,10 +231,14 @@ body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height:
 
 .ph-chip {
   display: flex; align-items: center; gap: 7px;
-  background: var(--orange-dim); padding: 6px 13px;
+  background: rgba(224, 90, 43, 0.08); 
+  backdrop-filter: blur(8px);
+  padding: 6px 13px;
   border-radius: 20px; border: 1px solid rgba(224,90,43,0.2);
   font-size: 12px; color: var(--orange); font-weight: 600;
+  transition: all 0.3s ease;
 }
+.ph-chip:hover { background: rgba(224, 90, 43, 0.12); border-color: rgba(224, 90, 43, 0.4); }
 .ph-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: sp2 2s infinite }
 @keyframes sp2 {
   0%,100% { box-shadow: 0 0 0 0 rgba(224,90,43,0.4) }
@@ -479,11 +496,11 @@ body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height:
 .m-field input[readonly] { background: var(--bg); color: var(--orange); font-family: var(--mono); font-weight: 600 }
 
 .m-btns { display: flex; gap: 10px; margin-top: 24px }
-.m-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-family: var(--fn); font-size: 14px; transition: all 0.2s }
+.m-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-family: var(--fn); font-size: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) }
 .m-cancel { background: var(--bg); border: 1.5px solid var(--brd); color: var(--sub) }
-.m-cancel:hover { border-color: var(--brd2); color: var(--text) }
+.m-cancel:hover { border-color: var(--dim); color: var(--text); transform: translateY(-1px); }
 .m-save { background: var(--navy); color: #fff }
-.m-save:hover { background: var(--orange) }
+.m-save:hover { background: var(--orange); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(224,90,43,0.2); }
 
 /* ═══ LOADER ═══ */
 #ldr {
@@ -494,7 +511,9 @@ body { color: var(--text); font-family: var(--fn); font-size: 15px; line-height:
 }
 #ldr.hidden { opacity: 0; pointer-events: none }
 .lring { width: 42px; height: 42px; border: 3px solid var(--brd2); border-top-color: var(--orange); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px }
-.ltxt { font-size: 14px; color: var(--sub); font-weight: 500 }
+.ltxt { font-size: 14px; color: var(--navy); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.2px }
+.ldr-pb-wrap { width: 220px; height: 6px; background: rgba(10,31,68,0.06); border-radius: 10px; overflow: hidden; border: 1px solid rgba(10,31,68,0.04) }
+.ldr-pb { width: 0%; height: 100%; background: linear-gradient(90deg, var(--navy), var(--orange)); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px }
 
 /* ═══ REQUIREMENTS CARD ═══ */
 .reqcard {

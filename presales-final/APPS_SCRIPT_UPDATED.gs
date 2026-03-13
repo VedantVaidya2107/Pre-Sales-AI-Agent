@@ -135,34 +135,39 @@ function sendBotEmail(to, company, clientId, botUrl) {
 
   const subject = `Your Zoho Discovery Agent is Ready — ${company}`;
   const htmlBody = `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #F0F4FB; padding: 32px 20px;">
-      <div style="background: linear-gradient(145deg, #0B1120, #0D3AB5); border-radius: 16px; padding: 40px 36px; text-align: center; margin-bottom: 24px;">
-        <div style="width: 48px; height: 48px; background: #2B72F5; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 16px;">F</div>
-        <h1 style="color: #fff; font-size: 24px; margin: 0 0 8px; font-weight: 800;">Your Zoho Discovery Agent<br/>is Ready</h1>
-        <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 14px;">Fristine Infotech · Premium Zoho Partner</p>
+    <div style="font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F8FAFF; color: #0A1F44; padding: 40px 20px;">
+      <!-- Header -->
+      <div style="background-color: #0A1F44; border-radius: 20px 20px 0 0; padding: 44px 40px; text-align: center; border-bottom: 4px solid #E05A2B;">
+        <div style="width: 52px; height: 52px; background-color: #E05A2B; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 20px;">F</div>
+        <h1 style="color: #ffffff; font-size: 26px; margin: 0; font-weight: 800; letter-spacing: -1px; line-height: 1.2;">Your Strategy Discovery<br/>Session is Ready</h1>
       </div>
 
-      <div style="background: #fff; border-radius: 16px; padding: 32px 36px; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(26,79,214,0.08);">
-        <p style="color: #1A2540; font-size: 16px; margin: 0 0 16px;">Hi <strong>${company} Team</strong>,</p>
-        <p style="color: #4F6282; font-size: 14px; line-height: 1.7; margin: 0 0 24px;">
-          We've set up a <strong>personalized Zoho Discovery Session</strong> for your organization.
-          Our AI-powered agent will guide you through a strategic consultation to understand your
-          business needs and prepare a tailored Zoho implementation proposal.
+      <!-- Content -->
+      <div style="background-color: #ffffff; border-radius: 0 0 20px 20px; padding: 40px; box-shadow: 0 15px 35px rgba(10,31,68,0.08); border: 1px solid #E2E8F4; border-top: none;">
+        <p style="font-size: 16px; font-weight: 700; color: #0A1F44; margin: 0 0 16px;">Hello ${company} Team,</p>
+        <p style="font-size: 15px; color: #5A6A85; line-height: 1.7; margin: 0 0 32px;">
+          We are pleased to invite you to your personalized **Zoho Discovery Session**. This AI-powered consultation will analyze your business requirements and architect a high-fidelity Zoho implementation roadmap tailored for <strong>${company}</strong>.
         </p>
 
-        <div style="text-align: center; margin: 28px 0;">
-          <a href="${botUrl}" style="display: inline-block; background: linear-gradient(135deg, #1A4FD6, #2B72F5); color: #fff; text-decoration: none; padding: 14px 36px; border-radius: 12px; font-size: 15px; font-weight: 700; letter-spacing: 0.3px;">
-            🚀 Start My Discovery Session →
+        <!-- CTA Box -->
+        <div style="background-color: #F4F6FB; border-radius: 16px; padding: 32px; text-align: center; border: 1px dashed #CBD5E8;">
+          <a href="${botUrl}" style="display: inline-block; background-color: #0A1F44; color: #ffffff; text-decoration: none; padding: 16px 44px; border-radius: 12px; font-size: 16px; font-weight: 700; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(10,31,68,0.2);">
+            🚀 Launch Discovery Agent →
           </a>
+          <p style="margin: 20px 0 0; font-size: 12px; color: #95A3BC;">
+            Secure Access Token: <code style="color: #E05A2B; font-weight: 700;">${clientId}</code>
+          </p>
         </div>
 
-        <p style="color: #7A91B3; font-size: 12px; text-align: center; margin: 0;">
-          Or copy this link: <a href="${botUrl}" style="color: #2B72F5;">${botUrl}</a>
-        </p>
+        <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid #E2E8F4; text-align: center;">
+          <p style="font-size: 14px; font-weight: 700; color: #0A1F44; margin: 0 0 4px;">Fristine Infotech Pre-Sales</p>
+          <p style="font-size: 12px; color: #95A3BC; margin: 0;">India's Leading Premium Zoho Partner</p>
+        </div>
       </div>
 
-      <p style="color: #7A91B3; font-size: 12px; text-align: center; margin: 0;">
-        This session was prepared by Fristine Infotech Pre-Sales Team · Confidential
+      <p style="color: #95A3BC; font-size: 11px; text-align: center; margin-top: 24px;">
+        CONFIDENTIAL · ${new Date().getFullYear()} Fristine Infotech Pvt Ltd<br/>
+        This invitation is intended for the addressee only.
       </p>
     </div>
   `;
