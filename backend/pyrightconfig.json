@@ -1,0 +1,7 @@
+{
+  "venvPath": "d:/Pre-Sales Agent",
+  "venv": ".venv",
+  "extraPaths": [
+    "."
+  ]
+}

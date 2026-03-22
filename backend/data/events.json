@@ -1,0 +1,54 @@
+{
+  "FRIST001": [
+    {
+      "client_id": "FRIST001",
+      "event": "bot_sent",
+      "note": null,
+      "timestamp": "2026-03-20T10:23:31.287891"
+    },
+    {
+      "client_id": "FRIST001",
+      "event": "bot_accessed",
+      "note": null,
+      "timestamp": "2026-03-22T06:34:29.175929"
+    },
+    {
+      "client_id": "FRIST001",
+      "event": "conversation_started",
+      "note": null,
+      "timestamp": "2026-03-22T06:34:32.410341"
+    },
+    {
+      "client_id": "FRIST001",
+      "event": "proposal_generated",
+      "note": null,
+      "timestamp": "2026-03-22T06:41:37.779202"
+    },
+    {
+      "client_id": "FRIST001",
+      "event": "proposal_submitted",
+      "note": null,
+      "timestamp": "2026-03-22T06:41:37.823212"
+    }
+  ],
+  "FRIST002": [
+    {
+      "client_id": "FRIST002",
+      "event": "bot_sent",
+      "note": null,
+      "timestamp": "2026-03-22T06:19:26.272902"
+    },
+    {
+      "client_id": "FRIST002",
+      "event": "bot_accessed",
+      "note": null,
+      "timestamp": "2026-03-22T06:23:48.643735"
+    },
+    {
+      "client_id": "FRIST002",
+      "event": "conversation_started",
+      "note": null,
+      "timestamp": "2026-03-22T06:23:51.598611"
+    }
+  ]
+}
